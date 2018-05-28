@@ -1,1 +1,3 @@
-# cat_feeder
+# Cat Feeder
+
+I'm making an automatic cat feeder!

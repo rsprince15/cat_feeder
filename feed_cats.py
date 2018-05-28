@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import RPi.GPIO as GPIO
 import time
+import datetime
+
+print(datetime.datetime.now().time())
 
 GPIO.setmode(GPIO.BOARD)
 
@@ -21,4 +24,5 @@ try:
     time.sleep(1) # sleep 1 second
 except KeyboardInterrupt:
     p.stop()
-    GPIO.cleanup()
+
+GPIO.cleanup()
