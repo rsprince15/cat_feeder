@@ -1,27 +1,36 @@
 <!DOCTYPE html>
 <head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
 <html>
 <body>
 
-<h2>The Button Element</h2>
-<button type="button">Click Me</button>
+<h2>The Cat Feeder</h2>
+<!--<a href="#"-->
+<button	class="btn btn-block btn-lg btn-success" id="button"><span class="glyphicon glyphicon-download-alt"></span> Feed the Kitties</button>
 
 <p></p>
 <script type="text/javascript">
     $(document).ready(function(){
-	 $("button").click(function(){
-            $.ajax({
-               type: 'POST',
+	 //$("button").click(function(){
+	    $("button").on('click', function(){
+	    $.ajax({
+               type: 'POSTi',
                url: 'exec.php',
                success: function(data) {
                   //alert(data);
                   $("p").text(data);
                }
             });
-         });
-    });
+       });
+   });
 </script>
 </body>
 </html>
