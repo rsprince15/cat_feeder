@@ -1,9 +1,10 @@
+#!/usr/bin/env python
+
 ###############################################################
 #
-# Title: cat_feeder.py
+# Title: schedule_feeder.py
 #
 # Function: This script is ran using crontab scheduling
-#
 #
 ###############################################################
 import RPi.GPIO as GPIO

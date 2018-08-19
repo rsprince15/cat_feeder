@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <head>
+
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
@@ -18,115 +19,203 @@
 </head>
 <html>
 <body>
-<meta charset="utf-8"/>
-<meta name="viewport" content="initial-scale=1">
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="initial-scale=1">
 
-<h2>The Cat Feeder</h2>
+    <h2>The Cat Feeder</h2>
 
-<!--Button to Feed Cats-->
-<button	class="btn btn-block btn-lg btn-success" id="button"><span class="glyphicon glyphicon-download-alt"></span> Feed the Masters</button>
-<p></p>
+    <!--Button to Feed Cats-->
+    <button	class="btn btn-block btn-lg btn-success" id="button"><span class="glyphicon glyphicon-download-alt"></span> Feed the Masters</button>
+    <p></p>
 
-<!--Slider to Schedule Feeding Time-->
-<style>
+    <!--Slider to Schedule Feeding Time-->
+    <style>
     #slider-range,#SlideMax{width:400px;}
     #slider-range,#time, #SlideMax, table{margin:10px;display:block;}
-</style>
-<div id="slider-range"></div>
-<span id="SlideMax"></span>
-<br />
-<span id="time"></span>
-<input type="submit" name="scheduleSubmit" value="Submit" id="scheduleSubmit" class="ui-button ui-state-default ui-corner-all"/>
-<table id="Schedule">
-    <thead>
-        <tr>
-            <th>Start Time</th>
-            <th>End Time</th>
+    </style>
+
+    <div id="slider-range"></div>
+    <span id="SlideMax"></span>
+    <br />
+    <span id="time"></span>
+    <input type="submit" name="scheduleSubmit" value="Submit" id="scheduleSubmit" class="ui-button ui-state-default ui-corner-all"/>
+
+    <table id="Schedule">
+        <thead>
+            <tr>
+                <th>Start Time</th>
+                <th>End Time</th>
             </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
+        </thead>
+        <tbody> 
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+
+    /*
+    * 
+    * Tells server to run script to feed the cats.
+    *
+    */
+    $(document).ready(function(){
+        $("button").on('click', function(){
+            $.post('exec.php', function(data) {
+                console.log(data);
+                }
+            );
+        });
+    });
 
 
-<script type="text/javascript">
+    /*
+    *
+    * Starts building slider from previously saved crontabs.
+    *
+    */
+    var startTime, 
+        endTime;
+    
+    function initTime(){
+        initTimeArray = new Array();
 
-// Runs one_time_feed.py
-$(document).ready(function(){
-$("button").on('click', function(){
-$.ajax({
-type: 'POSTi',
-url: 'exec.php',
-success: function(data) {
-	console.log(data);
-	//$("p").text(data);
-}
-});
-});
-});
+        $.get("get_times.php", function(data, status){ 
 
+            times = data.split(':');
 
-// Sets up slide
-var startTime;
-var endTime;
-$("#slider-range").slider({
-    range: true, min: 0, max: 2879, values: [540, 1020], step:5, slide: slideTime
-});
+            if (times.includes("")){
+                console.log("No previous crontabs");
+                initStartHours   = 12;
+                initStartMinutes = '00';
+                initStartTime    = 'PM';
+                initEndHours     = 24;
+                initEndMinutes   = '00';
+                initEndTime      = 'AM';
 
+            }
+            else {
+                initStartHours   = parseInt(times[0]);
+                initStartMinutes = parseInt(times[1]);
+                initStartTime    = (12 >= initStartHours ? 'PM' : 'AM');
+                initEndHours     = parseInt(times[2]);
+                initEndMinutes   = parseInt(times[3]);
+                initEndTime      = (12 >= initEndHours ? 'PM' : 'AM');
+            } 
 
-function slideTime(event, ui){
-    var val0 = $("#slider-range").slider("values", 0),
-        val1 = $("#slider-range").slider("values", 1),
-        minutes0 = parseInt(val0 % 60, 10),
-        hours0 = parseInt(val0 / 60 % 24, 10),
-        minutes1 = parseInt(val1 % 60, 10),
-        hours1 = parseInt(val1 / 60 % 24, 10);
-        console.log(hours0);
-    startTime = getTime(hours0, minutes0);
-    endTime = getTime(hours1, minutes1);
-    $("#time").text(startTime + ' - ' + endTime);
-}
-function getTime(hours, minutes) {
-    var time = "";
-   
-    function saveData(data){
-       
-	    time = data;
+            // time to slide scale = (mintues/60 + hours) * 60            
+            initTimeArray[0] = (initStartMinutes / 60 + initStartHours) * 60;
+            initTimeArray[1] = (initEndMinutes / 60 + initEndHours) * 60;
+
+            // Initalize Slider
+            $("#slider-range").slider({ range: true, min: 0, max: 1440, values: initTimeArray, step:5, slide:slideTime   
+            });
+
+            if (24 == initStartHours) {initStartHours=12;}
+            if (24 == initEndHours) {initEndHours=12;}
+            
+            $("#time").text(initStartHours   + ":" + 
+                            initStartMinutes + " " +
+                            initStartTime    + " - " +
+                            initEndHours     + ":" +
+                            initEndMinutes   + " " +
+                            initEndTime);
+        });
     }
 
-   $.get("get_times.php", function(data, status){
-       console.log("Data: " + data + "\nStatus: " + status);
-       $("#time").text(data);
-       time = data;
-      // console.log(time);
+
+    /*
+    *
+    * Sets slider text by converting slider's values to readable time format.
+    *
+    */
+    function slideTime(event, ui){
+        var slider0  = $("#slider-range").slider("values", 0),
+            slider1  = $("#slider-range").slider("values", 1),
+            minutes0 = parseInt(slider0 % 60, 10),
+            hours0   = parseInt(slider0 / 60 % 24, 10),
+            minutes1 = parseInt(slider1 % 60, 10),
+            hours1   = parseInt(slider1 / 60 % 24, 10);
+    
+        
+        startTime = getTime(hours0, minutes0);
+        endTime   = getTime(hours1, minutes1);
+        
+        $("#time").text(startTime[0] + ' - ' + endTime[0]);
+    }
+
+    /*
+    *
+    * Gets time from slide and returns hours, minutes, time of day 
+    * for later use.
+    *
+    */
+    function getTime(hours, minutes) {
+        var time = "";
+        var timeArray = new Array();
        
-   });
-   
-    //console.log(time); 
-    minutes = minutes + "";
-    if (hours < 12) {time = "AM";}
-    else {  time = "PM";}
-    if (hours == 0) {hours = 12;}
-    if (hours > 12) {hours = hours - 12; }
-    if (minutes.length == 1) {minutes = "0" + minutes;}
-    return hours + ":" + minutes + " " + time;
-}
-
-$("#scheduleSubmit").on('click', function(){
-    //console.log(startTime);
-    //console.log(endTime);
-    $('#Schedule tbody').append('<tr>' +
-        '<td>' + startTime + '</td>' +
-        '<td>' + endTime + '</td>' +
-        '</tr>');
-
-    $.post('set_times.php', {startTime:startTime, endTime:endTime}, function(data) {
-           console.log(data)
+        minutes = minutes + "";
+        
+        if (hours < 12) {
+            time = "AM";
         }
-    );
-});
-slideTime();
+        else {
+            time = "PM";
+        }
+        
+        if (hours == 0) {hours = 12;}
+        
+        if (hours > 12) {hours = hours - 12;}
+        
+        if (minutes.length == 1) {minutes = "0" + minutes;}
+        
+        timeArray[0] = constructTime = hours + ":" + minutes + " " + time;
+        timeArray[1] = hours;
+        timeArray[2] = minutes;
+        timeArray[3] = time;
+        return timeArray;
+    }
 
-</script>
+    /*
+    *
+    * When submit button is pressed this function will send the times to 
+    * server side for crontab scheduling. Server side handles converting to 24-hour
+    * format.
+    *
+    */
+    $("#scheduleSubmit").on('click', function(){
+        var slider0  = $("#slider-range").slider("values", 0),
+            slider1  = $("#slider-range").slider("values", 1),
+            minutes0 = parseInt(slider0 % 60, 10),
+            hours0   = parseInt(slider0 / 60 % 24, 10),
+            minutes1 = parseInt(slider1 % 60, 10),
+            hours1   = parseInt(slider1 / 60 % 24, 10);
+    
+        
+        startTime = getTime(hours0, minutes0);
+        endTime   = getTime(hours1, minutes1);
+
+        $('#Schedule tbody').append('<tr>' +
+            '<td>' + startTime[0] + '</td>' +
+            '<td>' + endTime[0] + '</td>' +
+            '</tr>');
+    
+        $.post('set_times.php', 
+               {startHours:startTime[1], 
+                startMinutes:startTime[2], 
+                startTime:startTime[3], 
+                endHours:endTime[1],
+                endMinutes:endTime[2],
+                endTime:endTime[3]}, 
+               function(data) {
+                   console.log(data)
+            }
+        );
+    });
+
+    initTime();
+    slideTime();
+
+    </script>
+
 </body>
 </html>
